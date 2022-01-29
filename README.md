@@ -12,3 +12,11 @@
 컴퓨터그래픽스
 
 디자인패턴
+
+
+## Reference
+
+[gyoogle/tech-interview-for-developer](https://github.com/gyoogle/tech-interview-for-developer)
+
+[JaeYeopHan/Interview_Question_for_Beginner](https://github.com/JaeYeopHan/Interview_Question_for_Beginner)
+
