@@ -14,6 +14,10 @@
 
 [렌더링 파이프라인](ComputerGraphics/RenderingPipeline.md)
 
+[스자이공부](ComputerGraphics/SRTRP.md)
+
+[컬링](ComputerGraphics/Culling.md)
+
 
 ## 디자인패턴
 
