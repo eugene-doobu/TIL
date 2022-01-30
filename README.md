@@ -12,7 +12,7 @@
 
 ## 컴퓨터그래픽스
 
-[ComputerGraphics/RenderingPipeline](ComputerGraphics/RenderingPipeline.md)
+[렌더링 파이프라인](ComputerGraphics/RenderingPipeline.md)
 
 
 ## 디자인패턴
