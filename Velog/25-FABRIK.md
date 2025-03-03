@@ -400,7 +400,7 @@ public void SolveIK()
     var targetPosition = GetPositionRootSpace(_target);
     var targetRotation = GetRotationRootSpace(_target);
 
-    var isReachable = (targetPosition - GetPositionRootSpace(_bones[0].Transform)).sqrMagnitude >=
+    var isReachable = (targetPosition - GetPositionRootSpace(_bones[0].Transform)).sqrMagnitude <
                       _completeLength * _completeLength;
     if (!isReachable)
     {
@@ -534,7 +534,48 @@ private void MoveFeetToIkPoint(AvatarIKGoal foot, FootIkSolverData solverData, r
 
 ## 4.3. HandIK
 
-TODO..
+위 로직이 HandIK에서도 잘 적용되는지 테스트하기 위해 간단한 HandIK예제를 만들어보자. 현재 테스트중인 게임의 캐릭터에는 펀치로 적을 공격하는 Muscle Cat캐릭터가 있는데, 해당 캐릭터의 주먹이 특정 타겟을 공격하도록 애니메이션을 보정해보려고 한다.
+
+다양한 펀치 애니메이션에 대해서 후보정을 수정하기는 까다롭기 때문에, 애니메이터에서 사용하는 모든 펀치 애니메이션을 `RightHook` anim 데이터를 이용하도록 수정하고, 해당 애니메이션에서 IK를 이용한 후보정을 진행해보도록 하겠다.
+
+![펀치 10프레임](https://velog.velcdn.com/images/eugene-doobu/post/6bbccb82-6b25-40da-9a37-4eff6fb9a0c1/image.png) | ![펀치 15프레임](https://velog.velcdn.com/images/eugene-doobu/post/534a5aad-34b2-4688-8137-3ed141ea3384/image.png)
+---|---|
+
+위 스크린샷은 `RightHook` 애니메이션에서 주먹을 뻗는 부분(10 프레임)과 주먹을 거두는 부분(15프레임)을 캡쳐한 것이다. 해당 프레임을 기준으로 주먹을 뻗는 부분에서 정해진 타겟을 가격하도록 애니메이션을 수정한 후 주먹을 거두는 애니메이션 쯤 원래 애니메이션으로 돌아오도록 애니메이션을 보정해보겠다.
+
+ ![Right Hook anim data](https://velog.velcdn.com/images/eugene-doobu/post/538ecf15-2b03-42bf-9faf-a75b127cc7db/image.png)
+
+사용할 캐릭터 제어 스크립트에 `HandIkWeight`라는 필드를 추가 후, `RightHook` anim 데이터에서 10프레임에 해당 값을 1, 0과 15프레임에 해당 값을 0으로 셋팅하도록 하였다. 지정된 프레임 사이 값은 애니메이터에서 기본적으로 보간해주는 값으로 설정되어있다.
+
+```cpp
+        [SerializeField] private Transform rightHandTarget;
+
+        protected override void LateUpdate()
+        {
+            base.LateUpdate();
+
+            if (rightHandTarget && HandIkWeight > 0.01f)
+            {
+                var rightHand = ObjAnimator.GetBoneTransform(HumanBodyBones.RightHand);
+                var targetPosition = Vector3.Lerp(rightHand.position, rightHandTarget.position, HandIkWeight);
+                var targetRotation = Quaternion.Lerp(rightHand.rotation, rightHandTarget.rotation, HandIkWeight);
+                Fabrik.SetTarget(AvatarIKGoal.RightHand, targetPosition, targetRotation);
+            }
+        }
+```
+
+샘플 코드는 매우 간단하게 작성되었다. 애니메이션으로 지정되는 값인 `HandIkWeight`가 0.01이상이며 `rightHandTarget`이 있는 경우 주먹의 Transform값과 Target의 Transform값을 보간하여 애니메이션을 보정하도록 셋팅하였다.
+
+!youtube[NUXyswKa_ts?si=B8aF96Cid5jRgq2m]
+
+HandIK를 적용 후, 주먹을 뻗을 때 지정된 타겟 포지션으로 주먹이 나가는 것을 확인할 수 있다.
+
+하지만 어색한 점을 확인할 수 있는데 본의 회전 값이 매우 어색한 포인트들을 발견할 수 있다. FABRIK의 기본 구현에서 신체의 각도 제한을 고려하지 않기 때문에 물리적으로 불가능한 애니메이션이 수행되는 경우가 있다. 이를 방지하기 위해서는 다음과 같은 방법들이 있다.
+
+- 컨텐츠 로직: IK 후보정을 수행하는 조건에 시야에 따라 일정 각도 안에 있는 오브젝트에 대해서만 IK Target으로 판정을 해주는 로직을 추가하는 방법
+- IK 로직: 본의 자유도를 제한하거나 일정 범위에서만 회전이 가능하도록 변화값의 제한 추가
+
+IK 로직의 개선에 대한 내용은 아래 개선사항에서 조금 더 자세히 다뤄보도록 하겠다.
 
 # 5. 개선사항
 
